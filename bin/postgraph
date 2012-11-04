@@ -1,0 +1,144 @@
+#!/bin/env ruby
+
+require 'rrdgraph'
+
+RRDGraph::Config.config do |c|
+  c.filename = "/home/zpatten/maillog"
+  c.rrd_dir = "./tmp"
+  c.images_dir = "./tmp"
+
+  # c.width = 512
+  # c.height = c.width.div(4)
+
+  # c.colors.merge!(
+  #   :back => "000000",
+  #   :canvas => "000000",
+  #   :shadea => "ffffff",
+  #   :shadeb => "ffffff",
+  #   :grid => "999999",
+  #   :mgrid => "ff8c00",
+  #   :font => "ffffff",
+  #   :axis => "333333",
+  #   :arrow => "ff0000",
+  #   :frame => "000000"
+  # )
+
+  c.vertical_label = "avg msgs/min"
+
+  c.rrds = Hash[
+    :smtp => [
+      OpenStruct.new(:name => "received", :draw => "AREA", :color => "33FF33"),
+      OpenStruct.new(:name => "sent", :draw => "AREA", :color => "3333FF", :negative => true)
+    ],
+    :smtp2 => [
+      OpenStruct.new(:name => "rejected", :draw => "AREA", :color => "FF0000"),
+      OpenStruct.new(:name => "connect", :draw => "LINE1", :color => "3333FF"),
+      OpenStruct.new(:name => "virus", :draw => "AREA", :color => "FFFF00"),
+      OpenStruct.new(:name => "bounced", :draw => "STACK", :color => "000000"),
+      OpenStruct.new(:name => "spam", :draw => "STACK", :color => "FF8C00")
+    ],
+    :grey => [
+      OpenStruct.new(:name => "awl", :draw => "AREA", :color => "00FF00"),
+      OpenStruct.new(:name => "ok", :draw => "STACK", :color => "006400"),
+      OpenStruct.new(:name => "early", :draw => "STACK", :color => "FF8C00"),
+      OpenStruct.new(:name => "new", :draw => "STACK", :color => "FF0000"),
+      OpenStruct.new(:name => "throttled", :draw => "STACK", :color => "000000")
+    ]
+  ]
+
+  c.parser = Proc.new do |line|
+    case line
+
+    when / sqlgrey: / then
+      case line
+      when / new: / then
+        :new
+      when / from awl: / then
+        :awl
+      when / from awl match: / then
+        :awl
+      when / early reconnect: / then
+        :early
+      when / reconnect ok: / then
+        :ok
+      when / throttling: / then
+        :throttled
+      else
+        nil
+      end
+
+    when / postfix\// then
+      case line
+      when /connect/ then
+        :connect
+      when /disconnect/ then
+        :disconnect
+      when /reject:/ then
+        if line =~ /blocked using/
+          if line =~ /virbl\./
+            :virus
+          else
+            :spam
+          end
+        else
+          :rejected
+        end
+      when /discard:/ then
+        :rejected
+      when /rejected:/ then
+        :rejected
+      when /status=sent/ then
+        :sent
+      when /status=bounced/ then
+        :bounced
+      # when /status=deferred/ then
+      # when /status=deliverable/ then
+      when / \(queue active\)/
+        :received
+      else
+        nil
+      end
+
+    when /amavis/ then
+      case line
+      when / Blocked / then
+        case line
+        when /SPAM(?:MY)?/ then
+          :spam
+        when /MTA-BLOCKED/ then
+          :rejected
+        when /BANNED/ then
+          :rejected
+        when /INFECTED/ then
+          :virus
+        else
+          nil
+        end
+      when / Passed / then
+        case line
+        when /SPAM(?:MY)?/ then
+          :spam
+        when /CLEAN/ then
+          :sent
+        when /BAD-HEADER/ then
+          :spam
+        when /INFECTED/ then
+          :virus
+        else
+          nil
+        end
+
+      else
+        nil
+      end
+    end
+  end
+
+end
+
+# rrd_daemon = RRDGraph::Daemon.new
+# rrd_daemon.run
+
+rrd_cgi = RRDGraph::CGI.new
+rrd_cgi.graph
+

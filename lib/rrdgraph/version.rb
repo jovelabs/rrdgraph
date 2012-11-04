@@ -1,3 +1,3 @@
-module Rrdgraph
+module RRDGraph
   VERSION = "0.0.1"
 end

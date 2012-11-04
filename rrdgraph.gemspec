@@ -5,7 +5,7 @@ require 'rrdgraph/version'
 
 Gem::Specification.new do |gem|
   gem.name          = "rrdgraph"
-  gem.version       = Rrdgraph::VERSION
+  gem.version       = RRDGraph::VERSION
   gem.authors       = ["Zachary Patten"]
   gem.email         = ["zachary@jovelabs.net"]
   gem.description   = %q{RRD Graph}
@@ -16,4 +16,6 @@ Gem::Specification.new do |gem|
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
+
+  gem.add_dependency("ztk")
 end

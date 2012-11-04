@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+require "pry"
+require "rrdgraph"
+
+##
+#
+# Welcome to the ZTK pry shell!
+#
+##
+binding.pry
