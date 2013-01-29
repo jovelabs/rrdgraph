@@ -141,4 +141,3 @@ end
 
 rrd_cgi = RRDGraph::CGI.new
 rrd_cgi.graph
-

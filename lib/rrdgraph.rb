@@ -218,7 +218,7 @@ module RRDGraph
       @logger.debug { "========== CONFIGURATION ==========" }
     end
 
-    DEFAULT_RANGE = (60 * 60 * 24)
+    DEFAULT_RANGE = (60 * 60 * 24 * 7)
     def graph(range=DEFAULT_RANGE)
       step = (range * Config.points_per_sample).div(Config.width)
       Config.rrds.each do |rrd, counters|
